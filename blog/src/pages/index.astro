@@ -1,0 +1,114 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import PostCard from '../components/PostCard.astro';
+import { src } from '../lib/base';
+import { sortCategories } from '../content.config';
+
+const posts = (await getCollection('posts')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+
+// 分类完全由 frontmatter 聚合，新增文章无需改页面代码
+const categories = sortCategories([...new Set(posts.map((p) => p.data.category))]);
+const counts = Object.fromEntries(
+  categories.map((c) => [c, posts.filter((p) => p.data.category === c).length]),
+);
+
+const total = posts.length;
+---
+
+<Base title="罗语墨 · 课程作业与论文" description="课程作业与学年论文的整理记录">
+  <Nav />
+
+  <main id="main">
+    <section class="hero">
+      <div class="wrap">
+        <p class="hero__eyebrow">课程作业与学年论文</p>
+        <h1 class="hero__title">
+          罗语墨
+          <span class="hero__role">网络与新媒体 · 智能传播方向</span>
+        </h1>
+        <p class="hero__lead">
+          这里收录我在课程里写下的东西——策划案、读后感、调研报告，以及一篇完整的学年论文。
+          按写完的时间排下来，算是对自己交过的作业的一个交代。
+        </p>
+        <div class="hero__meta">
+          <a class="tag tag--warm" href={src('posts/')}>共 {total} 篇</a>
+          {
+            categories.map((c) => (
+              <a class="tag" href={src(`category/${c}/`)}>
+                {c} {counts[c]}
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <header class="section-head">
+          <h2 class="section-title">全部内容</h2>
+          <p class="section-sub">按完成时间倒序</p>
+        </header>
+
+        <div class="filters" role="group" aria-label="按分类筛选">
+          <button class="filters__pill is-active" data-filter="全部" type="button">
+            全部 <span>{total}</span>
+          </button>
+          {
+            categories.map((c) => (
+              <button class="filters__pill" data-filter={c} type="button">
+                {c} <span>{counts[c]}</span>
+              </button>
+            ))
+          }
+        </div>
+
+        <div class="post-list" data-post-list>
+          {
+            posts.map((p) => (
+              <div data-cell data-cat={p.data.category}>
+                <PostCard post={p} />
+              </div>
+            ))
+          }
+        </div>
+
+        <p class="empty-note" data-empty-note hidden>当前分类下暂无内容。</p>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Base>
+
+<script is:inline>
+  // 分类筛选：卡片带 data-cat，切换时按分类显隐
+  var pills = document.querySelectorAll('[data-filter]');
+  var cells = document.querySelectorAll('[data-cell]');
+  var empty = document.querySelector('[data-empty-note]');
+
+  pills.forEach(function (pill) {
+    pill.addEventListener('click', function () {
+      var target = pill.getAttribute('data-filter');
+
+      pills.forEach(function (p) {
+        p.classList.toggle('is-active', p === pill);
+      });
+
+      var visible = 0;
+      cells.forEach(function (cell) {
+        var cat = cell.getAttribute('data-cat');
+        var show = target === '全部' || cat === target;
+        cell.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+
+      if (empty) empty.hidden = visible > 0;
+    });
+  });
+</script>

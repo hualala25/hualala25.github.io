@@ -1,0 +1,50 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import PostCard from '../../components/PostCard.astro';
+import { src } from '../../lib/base';
+
+const posts = (await getCollection('posts')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+
+const categories = [...new Set(posts.map((p) => p.data.category))];
+---
+
+<Base title="全部文章 · 罗语墨" description="按分类浏览全部内容">
+  <Nav />
+
+  <main id="main" class="page">
+    <div class="wrap">
+      <header class="page__head">
+        <h1 class="page__title">全部文章</h1>
+        <p class="page__sub">共 {posts.length} 篇 · {categories.length} 个分类</p>
+        <ul class="cats">
+          {
+            categories.map((c) => (
+              <li>
+                <a class="tag" href={src(`category/${c}/`)}>
+                  {c}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </header>
+
+      <div class="post-list">
+        {
+          posts.map((p) => (
+            <div data-cell data-cat={p.data.category}>
+              <PostCard post={p} />
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Base>

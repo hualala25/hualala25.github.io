@@ -1,0 +1,29 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import { src } from '../lib/base';
+---
+
+<Base title="页面不存在 · 罗语墨" description="404">
+  <Nav />
+
+  <main id="main" class="page">
+    <div class="wrap">
+      <header class="page__head">
+        <h1 class="page__title">页面不存在</h1>
+        <p class="page__sub">这个地址下没有内容，可能是链接写错了。</p>
+      </header>
+
+      <div class="about__body">
+        <p>
+          <a href={src('posts/')}>返回全部文章</a>
+          ，或者
+          <a href={src('')}>回到首页</a>。
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Base>

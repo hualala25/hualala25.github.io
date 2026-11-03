@@ -1,0 +1,125 @@
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 允许并发部署，取消进行中的旧任务
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: blog/package-lock.json
+
+      - name: Install dependencies
+        working-directory: blog
+        run: npm ci
+
+      - name: Build blog
+        working-directory: blog
+        run: npm run build
+
+      - name: Assemble site
+        run: |
+          # 博客产物放进 Assignment2/，与 Assignment1/ 平级
+          mkdir -p _site/Assignment2
+          cp -r blog/dist/. _site/Assignment2/
+
+          # Assignment1 保持原样，与仓库中的静态文件一致
+          mkdir -p _site/Assignment1
+          cp -r Assignment1/. _site/Assignment1/
+
+          # 根路径给一个索引页，指向两个子站
+          cat > _site/index.html <<'HTML'
+          <!DOCTYPE html>
+          <html lang="zh-CN">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              <title>罗语墨 · 作品与写作</title>
+              <style>
+                body {
+                  margin: 0;
+                  min-height: 100vh;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  background: #fdfaf6;
+                  color: #2f2a26;
+                  font-family: 'PingFang SC', 'Noto Sans SC', -apple-system, sans-serif;
+                  line-height: 1.75;
+                }
+                .box { text-align: center; padding: 32px; }
+                h1 {
+                  margin: 0 0 6px;
+                  font-size: 26px;
+                  font-weight: 600;
+                  letter-spacing: 0.02em;
+                }
+                p { margin: 0 0 26px; color: #6f6560; font-size: 14px; }
+                a.item {
+                  display: block;
+                  max-width: 340px;
+                  margin: 0 auto 12px;
+                  padding: 16px 20px;
+                  border: 1px solid #ece3dd;
+                  border-radius: 12px;
+                  text-decoration: none;
+                  color: inherit;
+                  transition: border-color 0.15s ease;
+                }
+                a.item:hover { border-color: #d4708a; }
+                a.item b { display: block; font-size: 16px; font-weight: 600; }
+                a.item span { font-size: 13px; color: #6f6560; }
+              </style>
+            </head>
+            <body>
+              <div class="box">
+                <h1>罗语墨</h1>
+                <p>作品与写作</p>
+                <a class="item" href="/Assignment2/">
+                  <b>课程作业与论文</b>
+                  <span>策划案、读后感、学年论文</span>
+                </a>
+                <a class="item" href="/Assignment1/">
+                  <b>《你当像鸟飞往你的山》</b>
+                  <span>交互式名著解说作品</span>
+                </a>
+              </div>
+            </body>
+          </html>
+          HTML
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

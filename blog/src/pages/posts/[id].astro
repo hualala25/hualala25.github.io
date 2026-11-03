@@ -1,0 +1,92 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import { src } from '../../lib/base';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+  return posts.map((p) => ({ params: { id: p.id }, props: { post: p } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const d = post.data;
+
+const all = (await getCollection('posts')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+const idx = all.findIndex((p) => p.id === post.id);
+const prev = idx > 0 ? all[idx - 1] : undefined;
+const next = idx < all.length - 1 ? all[idx + 1] : undefined;
+
+const fmt = (date: Date) =>
+  `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+---
+
+<Base title={`${d.title} · 罗语墨`} description={d.summary}>
+  <Nav />
+
+  <main id="main" class="detail">
+    <div class="wrap detail__inner">
+      <a class="back" href={src('posts/')}>← 返回全部文章</a>
+
+      <header>
+        <div class="detail__tags">
+          <span class="tag">{d.category}</span>
+          <span class="tag tag--warm">{d.course}</span>
+          {
+            d.tags.map((t) => (
+              <span class="tag tag--plain">{t}</span>
+            ))
+          }
+        </div>
+
+        <h1 class="detail__title">{d.title}</h1>
+
+        <p class="detail__meta">
+          <span>{fmt(d.date)}</span>
+          <span>{d.category}</span>
+        </p>
+
+        {
+          d.cover && (
+            <div class="detail__cover">
+              <img src={d.cover} alt={d.title} loading="lazy" />
+            </div>
+          )
+        }
+
+        <p class="detail__summary">{d.summary}</p>
+      </header>
+
+      <article class="prose">
+        <Content />
+      </article>
+
+      {
+        (prev || next) && (
+          <nav class="pager" aria-label="上一篇 / 下一篇">
+            {prev ? (
+              <a class="pager__item" href={src(`posts/${prev.id}/`)}>
+                <span class="pager__label">← 更新的一篇</span>
+                <span class="pager__title">{prev.data.title}</span>
+              </a>
+            ) : (
+              <span />
+            )}
+            {next && (
+              <a class="pager__item pager__item--next" href={src(`posts/${next.id}/`)}>
+                <span class="pager__label">更早的一篇 →</span>
+                <span class="pager__title">{next.data.title}</span>
+              </a>
+            )}
+          </nav>
+        )
+      }
+    </div>
+  </main>
+
+  <Footer />
+</Base>

@@ -1,0 +1,37 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { src } from '../lib/base';
+
+interface Props {
+  post: CollectionEntry<'posts'>;
+}
+
+const { post } = Astro.props;
+const d = post.data;
+
+const fmt = (date: Date) =>
+  `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+---
+
+<article class="post-item" data-cell data-cat={d.category}>
+  <div class="post-item__tags">
+    <span class="tag">{d.category}</span>
+    <span class="tag tag--warm">{d.course}</span>
+    {
+      d.tags.slice(0, 3).map((t) => (
+        <span class="tag tag--plain">{t}</span>
+      ))
+    }
+  </div>
+
+  <h2 class="post-item__title">
+    <a href={src(`posts/${post.id}/`)}>{d.title}</a>
+  </h2>
+
+  <p class="post-item__meta">
+    <span>{fmt(d.date)}</span>
+    <span>{d.tags.length} 个标签</span>
+  </p>
+
+  <p class="post-item__summary">{d.summary}</p>
+</article>
