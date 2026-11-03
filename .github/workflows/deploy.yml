@@ -27,21 +27,21 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: blog/package-lock.json
+          cache-dependency-path: assignment2/package-lock.json
 
       - name: Install dependencies
-        working-directory: blog
+        working-directory: assignment2
         run: npm ci
 
       - name: Build blog
-        working-directory: blog
+        working-directory: assignment2
         run: npm run build
 
       - name: Assemble site
         run: |
           # 博客产物放进 Assignment2/，与 Assignment1/ 平级
           mkdir -p _site/Assignment2
-          cp -r blog/dist/. _site/Assignment2/
+          cp -r assignment2/dist/. _site/Assignment2/
 
           # Assignment1 保持原样，与仓库中的静态文件一致
           mkdir -p _site/Assignment1
@@ -102,6 +102,10 @@ jobs:
                 <a class="item" href="/Assignment1/">
                   <b>《你当像鸟飞往你的山》</b>
                   <span>交互式名著解说作品</span>
+                </a>
+                <a class="item" href="/her-march/">
+                  <b>《她的行军》</b>
+                  <span>交互式三维叙事作品</span>
                 </a>
               </div>
             </body>
