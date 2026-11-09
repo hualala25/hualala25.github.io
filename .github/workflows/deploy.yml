@@ -30,15 +30,11 @@ jobs:
           mkdir -p _site/Assignment1
           cp -r Assignment1/. _site/Assignment1/
 
-          # Assignment2 作为静态目录原样发布，放进去的文件即线上内容
-          # .gitkeep 只是占位符，不发布
-          if [ -n "$(ls -A Assignment2 2>/dev/null | grep -v '^\.gitkeep$')" ]; then
+          # Assignment2 作为静态目录原样发布，放进去的文件即线上内容。
+          # 目录不存在时整段跳过，不生成占位页。
+          if [ -d Assignment2 ]; then
             mkdir -p _site/Assignment2
             rsync -a --exclude '.gitkeep' Assignment2/ _site/Assignment2/
-          else
-            # 目录暂时为空，给一个占位页，避免索引页链接指向 404
-            mkdir -p _site/Assignment2
-            cp .github/placeholder/assignment2.html _site/Assignment2/index.html
           fi
 
           # 根路径索引页

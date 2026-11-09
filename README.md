@@ -5,7 +5,6 @@
 | 路径 | 内容 | 源码位置 |
 |---|---|---|
 | `/Assignment1/` | 《你当像鸟飞往你的山》· 交互式名著解说作品 | `Assignment1/`（纯静态） |
-| `/Assignment2/` | 新作品 | `Assignment2/`（纯静态） |
 | `/her-march/` | 《她的行军》· 交互式三维叙事作品 | 独立仓库 [hualala25/her-march](https://github.com/hualala25/her-march) |
 
 ## 部署
@@ -13,23 +12,25 @@
 主仓库使用 GitHub Actions 构建（`.github/workflows/deploy.yml`）：
 
 1. `Assignment1/` 原样复制到 `_site/Assignment1/`
-2. `Assignment2/` 原样复制到 `_site/Assignment2/`
-3. 根路径生成索引页
-4. 合并上传为 Pages 站点
+2. 根路径使用 `.github/placeholder/index.html` 作为索引页
+3. 合并上传为 Pages 站点
 
 推送到 `main` 分支即自动发布。
 
 ## 放新内容
 
-`Assignment2/` 是静态目录，把文件放进去就能上线：
+在仓库里新建一个目录（如 `Assignment2/`），把静态文件放进去，再在 workflow 的 Assemble 步骤里加两行复制逻辑：
 
-```
-Assignment2/
-├── index.html
-└── ...（任意静态资源）
+```bash
+if [ -d Assignment2 ]; then
+  mkdir -p _site/Assignment2
+  rsync -a --exclude '.gitkeep' Assignment2/ _site/Assignment2/
+fi
 ```
 
-如果内容需要构建流程（比如 Astro、Vue 项目），在 `Assignment2/` 下加 `package.json` 并在 workflow 里补上构建步骤即可。
+如果内容需要构建流程（Astro、Vue 等），在 workflow 里补上 `npm ci && npm run build`，把 `dist/` 复制到对应位置。
+
+索引页在 `.github/placeholder/index.html`，新增子站后记得同步加一条入口。
 
 ## 图片
 
