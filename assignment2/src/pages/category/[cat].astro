@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Nav from '../../components/Nav.astro';
 import Footer from '../../components/Footer.astro';
-import PostCard from '../../components/PostCard.astro';
+import IndexItem from '../../components/IndexItem.astro';
 import { src } from '../../lib/base';
 
 export async function getStaticPaths() {
@@ -33,9 +33,15 @@ const { cat, posts } = Astro.props;
         <p class="page__sub">共 {posts.length} 篇</p>
       </header>
 
-      <div class="post-list">
-        {posts.map((p) => <PostCard post={p} />)}
-      </div>
+      <ul class="index">
+        {
+          posts.map((p) => (
+            <li>
+              <IndexItem post={p} />
+            </li>
+          ))
+        }
+      </ul>
     </div>
   </main>
 

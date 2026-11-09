@@ -1,0 +1,22 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { src } from '../lib/base';
+
+interface Props {
+  post: CollectionEntry<'posts'>;
+}
+
+const { post } = Astro.props;
+const d = post.data;
+
+const fmt = (date: Date) =>
+  `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+---
+
+<article class="index-item" data-cell data-cat={d.category}>
+  <span class="index-item__date">{fmt(d.date)}</span>
+  <h2 class="index-item__title">
+    <a href={src(`posts/${post.id}/`)}>{d.title}</a>
+  </h2>
+  <span class="index-item__cat">{d.category}</span>
+</article>

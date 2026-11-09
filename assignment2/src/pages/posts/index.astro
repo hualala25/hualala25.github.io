@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Nav from '../../components/Nav.astro';
 import Footer from '../../components/Footer.astro';
-import PostCard from '../../components/PostCard.astro';
+import IndexItem from '../../components/IndexItem.astro';
 import { src } from '../../lib/base';
 
 const posts = (await getCollection('posts')).sort(
@@ -20,7 +20,7 @@ const categories = [...new Set(posts.map((p) => p.data.category))];
     <div class="wrap">
       <header class="page__head">
         <h1 class="page__title">全部文章</h1>
-        <p class="page__sub">共 {posts.length} 篇 · {categories.length} 个分类</p>
+        <p class="page__sub">共 {posts.length} 篇</p>
         <ul class="cats">
           {
             categories.map((c) => (
@@ -34,17 +34,23 @@ const categories = [...new Set(posts.map((p) => p.data.category))];
         </ul>
       </header>
 
-      <div class="post-list">
+      <ul class="index">
         {
           posts.map((p) => (
-            <div data-cell data-cat={p.data.category}>
-              <PostCard post={p} />
-            </div>
+            <li>
+              <IndexItem post={p} />
+            </li>
           ))
         }
-      </div>
+      </ul>
     </div>
   </main>
 
   <Footer />
 </Base>
+
+<style>
+  .index {
+    margin: 30px 0 0;
+  }
+</style>
