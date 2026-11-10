@@ -1,0 +1,1 @@
+function e(e){return!e||/^(https?:)?\/\//.test(e)||e.startsWith(`/`)||e.startsWith(`data:`)?e:`https://hualala25.github.io/images/`+e}function t(e){return!e||!e.startsWith(`https://hualala25.github.io/images/`)?e:`https://raw.githubusercontent.com/hualala25/images/main/`+e.slice(35)}export{e as n,t};
