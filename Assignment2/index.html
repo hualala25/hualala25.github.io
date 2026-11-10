@@ -13,15 +13,52 @@
     <meta name="color-scheme" content="light" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f0e7e1'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23a63b4e'/%3E%3C/svg%3E" />
     <style>html{--lightningcss-light:initial;--lightningcss-dark: ;color-scheme:light;background:#f0e7e1}</style>
-    <script type="module" crossorigin src="./assets/index-CI3t8g_9.js"></script>
+    <script>
+      /*
+       * 缓存的自救：这个页面最多会被缓存十分钟，而每次构建都会换掉 JS 的文件名。
+       * 于是拿着旧页面的访客会去要一个已经不存在的脚本 —— 加载失败，页面一片空白，
+       * 刷新几次还是空白（还是那份旧的 HTML）。
+       *
+       * 这里盯着脚本的加载失败（模块脚本的 error 不冒泡，所以用捕获），失败就绕开缓存
+       * 重开一次。sessionStorage 只让它试一次：服务器真挂了的时候不能无限刷新。
+       */
+      (function () {
+        try {
+          var KEY = "duskfolio:reload";
+          var once = function () {
+            if (sessionStorage.getItem(KEY)) return;
+            sessionStorage.setItem(KEY, "1");
+            var u = location.pathname + location.search + (location.search ? "&" : "?") + "_r=" + Date.now() + location.hash;
+            location.replace(u);
+          };
+          addEventListener(
+            "error",
+            function (e) {
+              var t = e.target;
+              if (t && t.tagName === "SCRIPT") once();
+            },
+            true
+          );
+          // 页面跑起来了就清掉标记，下一次构建失效时还能再救一次
+          addEventListener("load", function () {
+            setTimeout(function () {
+              sessionStorage.removeItem(KEY);
+            }, 5000);
+          });
+        } catch (_) {
+          /* 没有 sessionStorage 就算了，至少别在这里抛错 */
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="./assets/index-C-_iTRV-.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-4tVxZq34.js">
     <link rel="modulepreload" crossorigin href="./assets/cover-CAksRSqJ.js">
     <link rel="modulepreload" crossorigin href="./assets/sound-DBO6nodU.js">
     <link rel="modulepreload" crossorigin href="./assets/bed-Bj7SxDsU.js">
     <link rel="stylesheet" crossorigin href="./assets/index-CNTzuwa9.css">
-      <link rel="modulepreload" href="./assets/bag-BQntVbN4.js" crossorigin />
-    <link rel="modulepreload" href="./assets/light-Dh65k-CN.js" crossorigin />
-    <link rel="modulepreload" href="./assets/scene-BLHUcQ2W.js" crossorigin />
+      <link rel="modulepreload" href="./assets/bag-B98yccws.js" crossorigin />
+    <link rel="modulepreload" href="./assets/light-qdDykdnP.js" crossorigin />
+    <link rel="modulepreload" href="./assets/scene-BPiM14bh.js" crossorigin />
     <link rel="modulepreload" href="./assets/three.module-CcNSrnR1.js" crossorigin />
   </head>
   <body>
