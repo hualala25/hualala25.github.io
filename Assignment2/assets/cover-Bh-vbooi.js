@@ -1,1 +1,0 @@
-var e=[`frost`,`cloth`,`leather`],t=Object.freeze({material:`frost`,color:`shiro`,foil:`silver`,title:``,window:null});export{t as n,e as t};
