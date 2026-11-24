@@ -1,0 +1,17 @@
+/* 思源宋体（Noto Serif SC）子集：只含本稿用到的 445 个字。
+ * 由 Google Fonts text= 接口取回（返回的是同一个可变字体文件，wght 200–900）。
+ * 一条 src 供两个字重：浏览器按 font-weight 取可变轴上的值。勿手改。 */
+@font-face {
+  font-family: "Noto Serif SC";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("./noto-serif-sc-subset.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Noto Serif SC";
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+  src: url("./noto-serif-sc-subset.woff2") format("woff2");
+}

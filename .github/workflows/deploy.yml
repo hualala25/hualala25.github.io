@@ -37,6 +37,12 @@ jobs:
             rsync -a --exclude '.gitkeep' Assignment2/ _site/Assignment2/
           fi
 
+          # Assignment4：1951 《倒扣的王牌》· 新闻传播视角 9 页 deck
+          if [ -d Assignment4 ]; then
+            mkdir -p _site/Assignment4
+            rsync -a --exclude '.gitkeep' Assignment4/ _site/Assignment4/
+          fi
+
           # 根路径索引页
           cp .github/placeholder/index.html _site/index.html
 

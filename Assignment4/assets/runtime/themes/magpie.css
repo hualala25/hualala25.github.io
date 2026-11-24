@@ -1,0 +1,142 @@
+/* 主题：Magpie（喜鹊谋杀案）
+ * 标签：premium
+ * 一句话：悬疑推理 —— 纯黑底、正红分屏、巨型粗宋刊头、剪影与细红线分割
+ * 默认配色：magpie
+ * 在 tokens.css 之后引入。规则见 references/themes.md。
+ *
+ * 视觉母题（全篇贯穿）：
+ *   1. 对半分割 —— 同一个 .s-surface 形状在页与页之间变形，红黑互换位置
+ *   2. 报纸刊头 —— 中文标题/正文用思源宋体（900 / 400），自带拉丁与汉字同源，
+ *      同一行里不会再出现两套字；Anton 只留给纯拉丁行（刊头小字、序号、页码）
+ *   3. 细红线分割 —— .s-accent 的 6px 横线当分隔线
+ *   4. 圆形徽章 —— .s-dot 的正圆红章，里面是页码，九页固定在同一位置
+ *
+ * 字体三层：
+ *   内容层   --font         思源宋体：中文标题、正文、引文、混排行
+ *   元信息层 --font-meta    Inter / 苹方：页眉、页脚、注释、坐标轴
+ *   刊头层   --font-latin   Anton：只给不含汉字的行（英文刊头、序号、页码）
+ *
+ * 新增类：
+ *   .t-kicker  小标（34px 红 + 24×3 短横）：每段正文前面那一行
+ *   .t-eyebrow 章节标签（30px 宋，灰）：中文页眉
+ *   .t-meta    注释（26px 无衬线，灰）
+ *   .t-foot    页脚（22px 无衬线，灰）
+ *   .t-cap     图注标题（32px 宋）
+ *   .t-num     页码/序号（Anton） */
+
+/* 自托管字体：拉丁那几个（Anton / Inter）来自 fonts.css；中文两个思源宋体子集放在同目录，
+   只取了本稿用到的字，两个 woff2 合计约 200KB。不再依赖系统苹方 —— 换机器、导 PDF 都不会掉字。 */
+@import url("../fonts/fonts.css");
+
+@import url("../fonts/noto-serif-sc.css");
+
+:root {
+  --radius-s: 0px;
+  --radius-m: 0px;
+  --radius-l: 0px;
+
+  --font: "Noto Serif SC", "Inter", -apple-system, "PingFang SC", sans-serif;
+  --font-display: "Noto Serif SC", "Anton", serif;
+  --font-meta: "Inter", -apple-system, "PingFang SC", sans-serif;
+  --font-latin: "Anton", "Inter", sans-serif;
+
+  /* 字号阶梯：相邻两档 ≥1.3×，正文 40 是地板，小标永远小于正文 */
+  --type-display: 168px;   /* 内页大字：单行 ≤6 字，超过就断行，不缩字号 */
+  --type-h1: 88px;         /* 章节标题 */
+  --type-h2: 56px;         /* 引文、二级标题 */
+  --type-body: 40px;       /* 正文：一行 18 字 = 720 宽 */
+  --type-kicker: 34px;     /* 小标 */
+  --type-meta: 26px;       /* 注释 */
+  --type-foot: 22px;       /* 页脚 */
+}
+
+/* ---------- 内容层：宋体 ---------- */
+.t-display {
+  font-family: var(--font-display); font-weight: 900; font-synthesis: none;
+  font-size: var(--type-display); line-height: 1.05; letter-spacing: -0.01em; white-space: nowrap;
+}
+.t-h1 {
+  font-family: var(--font-display); font-weight: 900; font-synthesis: none;
+  font-size: var(--type-h1); line-height: 1.15; letter-spacing: -0.005em;
+}
+.t-h2 {
+  font-family: var(--font-display); font-weight: 900; font-synthesis: none;
+  font-size: var(--type-h2); line-height: 1.35;
+}
+.t-body {
+  font-family: var(--font); font-weight: 400;
+  font-size: var(--type-body); line-height: 1.7; letter-spacing: 0; color: #EDEDEF;
+}
+.t-cap { font-family: var(--font-display); font-weight: 900; font-size: 32px; line-height: 1.3; }
+/* 行首标点吊出去：段首是 「《（ 的一段加 .hang，让标点吃进左边距 */
+.hang { text-indent: -0.5em; }
+
+/* ---------- 小标：红字 + 24×3 短横 ---------- */
+.t-kicker {
+  font-family: var(--font-display); font-weight: 900; font-synthesis: none;
+  font-size: var(--type-kicker); line-height: 1; letter-spacing: 0.02em;
+  color: var(--accent-text); white-space: nowrap;
+}
+.t-kicker::before {
+  content: ""; display: inline-block; width: 24px; height: 3px;
+  margin-right: 14px; vertical-align: 0.30em; background: currentColor;
+}
+/* 压在红块上的小标：红字会糊，换白字白线 */
+.t-kicker.is-on-surface { color: var(--text-on-surface); }
+
+/* ---------- 元信息层：无衬线 ---------- */
+.t-eyebrow {
+  font-family: var(--font-display); font-weight: 900; font-synthesis: none;
+  font-size: 30px; line-height: 1; letter-spacing: 0.04em; color: var(--text-dim); white-space: nowrap;
+}
+.t-meta {
+  font-family: var(--font-meta); font-weight: 500;
+  font-size: var(--type-meta); line-height: 1.5; letter-spacing: 0.02em; color: var(--text-dim);
+}
+.t-foot {
+  font-family: var(--font-meta); font-weight: 400;
+  font-size: var(--type-foot); line-height: 1.4; letter-spacing: 0.06em; color: var(--text-dim);
+}
+
+/* ---------- 刊头层：Anton，只给纯拉丁 ---------- */
+.t-tag {
+  font-family: var(--font-latin); font-size: 30px; font-weight: 400;
+  line-height: 1; white-space: nowrap; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.t-num {
+  font-family: var(--font-latin); font-size: 34px; font-weight: 400;
+  line-height: 1; letter-spacing: 0.06em; font-variant-numeric: tabular-nums;
+}
+
+
+/* ---------- 字号变体（类，不写行内 font-size） ---------- */
+.t-display-xl { font-size: 224px; letter-spacing: 0.06em; }   /* 1–3 字的极短题：大字要放开字距，不是收紧 */
+.t-display-s  { font-size: 152px; }   /* 封面、整幅页的长题 */
+.t-num-l { font-size: 52px; }         /* 目录序号 */
+.t-sub {
+  font-family: var(--font); font-weight: 400;
+  font-size: 32px; line-height: 1.65; letter-spacing: 0;
+}
+.t-year {
+  font-family: var(--font-display); font-weight: 900; font-synthesis: none;
+  font-size: 120px; line-height: 1; letter-spacing: 0.02em;
+  color: var(--accent-text); white-space: nowrap;
+}
+
+/* ---------- 旧类的兼容写法（页码章不再用 .t-stamp） ---------- */
+.t-label { font-family: var(--font-meta); letter-spacing: 0.04em; text-transform: none; }
+
+/* 压在红块上的文字：白。写在最后，盖住 .t-body 的 #EDEDEF */
+.t-body.t-on-surface, .t-meta.t-on-surface, .t-foot.t-on-surface,
+.t-eyebrow.t-on-surface, .t-h1.t-on-surface, .t-h2.t-on-surface {
+  color: var(--text-on-surface);
+}
+/* 大字标题收紧字距（汉字双字词用） */
+.t-tight {
+  letter-spacing: 0;
+}
+
+/* 术语对照表：压掉正文 1.8 的行走，用 1.55 撑出行距 */
+.t-row {
+  line-height: 1.55;
+}

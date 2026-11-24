@@ -6,6 +6,7 @@
 |---|---|---|
 | `/Assignment1/` | 《你当像鸟飞往你的山》· 交互式名著解说作品 | `Assignment1/`（纯静态） |
 | `/Assignment2/` | 课程作业与论文 · 三本实物册子的个人站点 | 独立仓库 [hualala25/duskfolio](https://github.com/hualala25/duskfolio) |
+| `/Assignment4/` | 《倒扣的王牌》· 1951 比利·怀尔德的矿难与围观 | `Assignment4/`（纯静态，reveal + GSAP） |
 | `/her-march/` | 《她的行军》· 交互式三维叙事作品 | 独立仓库 [hualala25/her-march](https://github.com/hualala25/her-march) |
 
 ## 部署

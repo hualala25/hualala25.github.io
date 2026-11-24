@@ -1,0 +1,309 @@
+/* orca-transition-skill 视觉规范 · 设计变量
+ * 画布固定 1920×1080。所有坐标都是 40 的倍数（40px 基线网格）。
+ * 每页的直接子元素都绝对定位，用 style="left:…; top:…" 摆放。 */
+:root {
+  --canvas-w: 1920px;
+  --canvas-h: 1080px;
+  --margin-x: 120px;
+  --margin-top: 80px;
+  --grid: 40px;
+
+  /* 字号阶梯，只能用这五档 */
+  --type-display: 160px;  /* 封面标题、章节标题 */
+  --type-metric: 280px;   /* 关键数字 */
+  --type-h1: 72px;        /* 内容页标题 */
+  --type-h2: 48px;        /* 条目、小标题 */
+  --type-body: 36px;      /* 说明文字 */
+  /* 第六档，只给文字镂空（.s-knockout 里的 .t-knockout）用：字是窗，窗要大 */
+  --type-knockout: 320px;
+
+  /* 颜色：一个背景、两个面、两级文字、一个强调色、一个强调色的弱化版 */
+  --bg: #0b0b0f;
+  --surface: #1a1a22;
+  --surface-2: #26262f;
+  --text: #f5f5f7;
+  --text-dim: #8e8e98;
+  --text-on-surface: #f5f5f7;  /* .s-surface 上的文字 */
+  --text-on-accent: #1c1c1e;   /* .s-accent / .s-accent-soft 上的文字 */
+  --accent: #ff7a1a;        /* 色块底色：.s-accent / .s-dot / 强调条 */
+  --accent-soft: #3a2415;
+  /* 强调色的「文字档」：直接落在 --bg 上、要读得动的强调文字（.t-accent / .t-metric）。
+     和 --accent 必须分开 —— 一个色值当不了两个角色：色块底色要浅(好压深字)，
+     落在浅底上的文字要深，两个要求在同一个值上互斥。blush 的奶油黄压在腮红粉上
+     只有 1.02:1（亮度几乎相同，只剩色相差），缩略图和投影里那行字直接消失。
+     见 scripts/check-palettes.mjs。 */
+  --accent-text: #ff9d52;
+  /* 镂空聚焦的幕布颜色，压暗但不全黑 */
+  --scrim: rgba(0, 0, 0, 0.72);
+
+  /* 分类色：几根并列的柱子各用一种颜色时（立体柱 .s-prism 的 --prism），不跟配色走 ——
+     和 .t-on-glass 的白字一样是固定值。一组柱子按 1、2、3… 顺着用，最多 5 种 */
+  --cat-1: #e08a3c;  /* 橙 */
+  --cat-2: #cc4fb4;  /* 洋红 */
+  --cat-3: #5b45b5;  /* 紫 */
+  --cat-4: #2f9e96;  /* 青 */
+  --cat-5: #7fb23a;  /* 绿 */
+
+  --radius-s: 8px;
+  --radius-m: 24px;
+  --radius-l: 40px;
+  --radius-full: 9999px;
+
+  --font: "PingFang SC", -apple-system, "Helvetica Neue", sans-serif;
+}
+
+html, body, .reveal { background: var(--bg); }
+.reveal { font-family: var(--font); color: var(--text); }
+.reveal .slides { text-align: left; }
+/* 单独打开时的播放条（engine.js 文末）：底部居中的半透明胶囊，鼠标停下 2 秒淡出 */
+.st-bar { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 30; display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px; background: color-mix(in srgb, var(--bg) 72%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 14%, transparent), 0 4px 16px rgb(0 0 0 / 0.25); backdrop-filter: blur(12px); color: var(--text-dim); font: 13px/1 var(--font); transition: opacity 240ms ease; }
+.st-bar-idle { opacity: 0; }
+.st-bar button { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 999px; background: none; color: inherit; cursor: pointer; }
+.st-bar button:hover:not(:disabled) { color: var(--text); background: color-mix(in srgb, var(--text) 10%, transparent); }
+.st-bar button:disabled { opacity: 0.35; cursor: default; }
+.st-bar-page { min-width: 52px; text-align: center; font-variant-numeric: tabular-nums; }
+@media (hover: none) { .st-bar-idle { opacity: 1; } }
+/* 单独打开时的总览（engine.js 的 openOverview）：网格铺满窗口、竖着滚 */
+.st-overview { position: fixed; inset: 0; z-index: 40; overflow: auto; overscroll-behavior: contain; display: grid; gap: 16px; padding: 16px; align-content: start; background: var(--bg); }
+/* 16:9 用 padding 撑：aspect-ratio 的格子在网格里行高按错的宽度算，一列时会叠在一起 */
+.st-overview-cell { position: relative; height: 0; padding: 0 0 56.25%; border: 0; border-radius: 6px; overflow: hidden; background: var(--bg); cursor: pointer; outline: 1px solid color-mix(in srgb, var(--text) 18%, transparent); outline-offset: 0; }
+.st-overview-cell:hover, .st-overview-cell:focus-visible { outline: 2px solid var(--text-dim); }
+.st-overview-cell[aria-current] { outline: 2px solid var(--accent); }
+.st-overview-thumb { position: absolute; inset: 0; pointer-events: none; }
+.st-overview-cell span { position: absolute; left: 6px; bottom: 4px; font: 12px/1 var(--font); color: var(--text-dim); text-shadow: 0 1px 2px rgb(0 0 0 / 0.6); }
+.reveal .slides > section { width: var(--canvas-w); height: var(--canvas-h); padding: 0; }
+.reveal .slides > section > *,
+.st-layer > * { position: absolute; margin: 0; }
+.st-layer { position: absolute; inset: 0; }
+/* 绕圆心转（transitions.md）：写了 rotate 的元素由 engine.js 标上 data-st-turn。
+   reveal 的 auto-animate 会给元素加 transform-origin: top left !important，这里压回来 */
+.reveal .slides [data-st-turn] { transform-origin: var(--st-origin, 50% 50%) !important; }
+
+/* 文字 */
+.t-display { font-size: var(--type-display); font-weight: 700; line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
+.t-metric  { font-size: var(--type-metric); font-weight: 700; line-height: 1; letter-spacing: -0.04em; color: var(--accent-text); white-space: nowrap; }
+.t-h1      { font-size: var(--type-h1); font-weight: 700; line-height: 1.1; white-space: nowrap; }
+.t-h2      { font-size: var(--type-h2); font-weight: 600; line-height: 1.2; }
+.t-body    { font-size: var(--type-body); line-height: 1.4; color: var(--text-dim); }
+/* 小标签:页眉、页脚、编号、坐标轴刻度。**这条在 tokens 里而不是各主题里** ——
+   版式片段(templates/layouts/*)是跨主题共用的，只能用这里保证有的类；
+   放在主题里的话，没定义它的主题一打开那个版式就漏样式（clearing 就漏过）。
+   主题可以照常覆盖字体、字重、字距。 */
+.t-label   { font-size: 24px; font-weight: 500; letter-spacing: 0.14em; line-height: 1;
+             text-transform: uppercase; white-space: nowrap; }
+/* 强调色的文字档，不是 --accent —— 理由见上面 --accent-text。
+   压在强调色块上的文字是另一回事，用 .t-on-accent。 */
+.t-accent  { color: var(--accent-text); }
+/* 渐变字：核心那一行字（封面的英文标题、章节的英文名）横着走三档颜色，默认 强调色 → 柔和强调色 → 主面色。
+   写在包着字的 <span> 上：<p class="t-h1" style="…"><span class="t-gradient">About me.</span></p> ——
+   渐变铺满的是字本身，不是整个文字框，短字也走得完三档；写在 p 上的话，框比字宽多少，后面的颜色就丢多少。
+   三档都来自配色，换配色跟着变；想换某一档就在行内写变量，比如 style="--grad-b: var(--surface-2)"（只许写变量）。
+   深底配色上最好看。只给一两行大字用：满屏渐变就没有重点了。 */
+.t-gradient { background: linear-gradient(90deg, var(--grad-a, var(--accent)), var(--grad-b, var(--accent-soft)) 55%, var(--grad-c, var(--surface)));
+              -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+.t-dim     { color: var(--text-dim); }
+.t-on-surface { color: var(--text-on-surface); }
+/* 强调色块（.s-accent / .s-accent-soft）上的文字。Bento 的 highlight 格必须用它 ——
+   全局只有一个文字色的话，总有一套配色的字会在强调色上消失（clearing 的白字压在
+   浅黄上只有 1.24:1）。见 scripts/check-palettes.mjs。 */
+.t-on-accent { color: var(--text-on-accent); }
+
+/* 形状 */
+.s-surface { background: var(--surface); border-radius: var(--radius-l); }
+.s-surface-2 { background: var(--surface-2); border-radius: var(--radius-m); }
+.s-accent  { background: var(--accent); border-radius: var(--radius-s); }
+.s-accent-soft { background: var(--accent-soft); border-radius: var(--radius-m); }
+.s-dot     { background: var(--accent); border-radius: 50%; }
+/* 镂空聚焦：一块压暗全屏的幕布，中间挖一个洞。写 left/top/width/height 定的是洞的位置和大小，
+   幕布由 box-shadow 往外铺满（比画布大得多，所以移动时不会露边）。
+   同一个 data-id 在下一页换个位置，洞就平滑地移到下一个重点上 —— 相当于 PowerPoint 里
+   「插入矩形 + 圆形 → 合并形状 → 剪除」再用平滑移动。
+   洞是圆的 —— 圆才有「打光打在这一块」的感觉，方的看着像把卡片抠下来。宽高写相等。
+   洞沿带一圈强调色描边：洞压在纯色底（尤其是纯黑）上时，洞里洞外一个样，
+   没有描边就看不出这是个圆，只看得见卡片自己的边。 */
+.s-spot    { border-radius: 50%; border: 3px solid var(--accent); box-shadow: 0 0 0 4000px var(--scrim); }
+/* 文字镂空：一块色块，字从里面挖掉，后面的照片从字里透出来；色块自上而下淡出，和照片接上。
+   相当于 PowerPoint 里「矩形 + 文本框 → 合并形状 · 剪除」再给剪出来的形状上渐变填充。
+   结构（写法见 visual-spec.md「文字镂空」）：
+     <div class="s-knockout"> <svg viewBox="0 0 W H"> <mask id="…"> <rect/> <text class="t-knockout">字</text> </mask>
+                                                     <rect mask="url(#…)"/> </svg> </div>
+   色块颜色用 --knockout，默认 --surface；淡出位置用 --knockout-fade（中间色标，默认 55%：
+   那里还剩 85% 不透明，再往下到底边全透明）。mask 里的黑白是挖洞用的亮度，不是配色，不随配色变。 */
+.s-knockout { pointer-events: none;
+              -webkit-mask-image: linear-gradient(#000, rgb(0 0 0 / 0.85) var(--knockout-fade, 55%), transparent);
+              mask-image: linear-gradient(#000, rgb(0 0 0 / 0.85) var(--knockout-fade, 55%), transparent); }
+.s-knockout > svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; }
+.s-knockout > svg > rect { fill: var(--knockout, var(--surface)); }
+.s-knockout mask > rect { fill: #fff; }
+.s-knockout mask > text { fill: #000; }
+.t-knockout { font-size: var(--type-knockout); font-weight: 700; letter-spacing: -0.03em; text-anchor: middle; }
+/* 毛玻璃卡片：压在整页照片上的文字卡。卡片后面的照片模糊着透出来，换哪张照片都搭，镜头一动底色跟着变。
+   **不跟配色走**：它的底是照片，不是 --bg，配色里没有哪个颜色能保证压在任意照片上都读得动 ——
+   所以用一层固定的暗色加模糊，字固定用白色（.t-on-glass）。照片太亮时字会不清楚，check-deck 按截图量对比度。
+   不压在照片上的地方用 .s-surface：底下是纯色，玻璃没东西可透。 */
+.s-glass { background: rgb(12 14 20 / 0.5); border-radius: var(--radius-l);
+           -webkit-backdrop-filter: blur(28px) saturate(1.4); backdrop-filter: blur(28px) saturate(1.4);
+           box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.18); }
+.t-on-glass { color: #fff; }
+/* 窗（transitions.md「翻面」）：透过它看到整页那张画的这一块 —— PowerPoint 里形状填充选「幻灯片背景填充」。
+   里面放 <img data-fill="slide">，engine.js 换成 .s-fill 按画布坐标铺满，窗走到哪露出哪一块。
+   白边和上半截托字的渐暗画在 ::after 上，压在画上面；窗上的字用 .t-on-glass（窗里是照片，不跟配色走，道理同 .s-glass）。
+   .s-frost 是磨砂的空窗：后面的画模糊着透出来，整页换画时跟着变，和 .s-window 排在一起当「还没轮到的那几格」。
+   .s-veil 把整页的画压暗一层（上重下轻），窗里没压暗的原画就显得亮。 */
+.s-window { overflow: hidden; border-radius: var(--radius-l); box-shadow: 0 24px 48px rgb(0 0 0 / 0.45); }
+.s-window::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+                   box-shadow: inset 0 0 0 3px rgb(255 255 255 / 0.92);
+                   background: linear-gradient(180deg, rgb(10 14 22 / 0.6) 0%, rgb(10 14 22 / 0.4) 38%, rgb(10 14 22 / 0) 62%); }
+.s-window > .s-fill { position: absolute; display: block; width: var(--canvas-w); height: var(--canvas-h); background: center / cover no-repeat; }
+.s-frost { background: rgb(255 255 255 / 0.28); border-radius: var(--radius-l);
+           -webkit-backdrop-filter: blur(10px) saturate(0.8); backdrop-filter: blur(10px) saturate(0.8);
+           box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.24); }
+.s-veil { left: 0; top: 0; width: var(--canvas-w); height: var(--canvas-h); pointer-events: none;
+          background: linear-gradient(180deg, rgb(0 0 0 / 0.78) 0%, rgb(0 0 0 / 0.34) 26%, rgb(0 0 0 / 0.16) 60%, rgb(0 0 0 / 0.42) 100%); }
+/* 抽屉（同款 drawer-tabs）：.s-slot 是贴着画布左缘、铺满整高的侧板，右边沿一道亮线、往右投一片影子；
+   .s-drawer 是从侧板右边沿伸出来的序号格，左边贴着侧板不画边，上、右、下一圈白细线，里面是磨砂的半透明白。
+   「拉出来」就是格子变宽。侧板写在抽屉后面，影子才压得住抽屉的根部，看着像从侧板底下抽出来的。
+   两样都压在整页照片上，和 .s-glass 一样不跟配色走，格上的字用 .t-on-glass。 */
+.s-slot { background: rgb(255 255 255 / 0.06);
+          -webkit-backdrop-filter: brightness(1.2) saturate(0.9); backdrop-filter: brightness(1.2) saturate(0.9);
+          box-shadow: 2px 0 0 rgb(255 255 255 / 0.3), 20px 0 36px rgb(0 0 0 / 0.65); }
+.s-drawer { background: linear-gradient(90deg, rgb(255 255 255 / 0.04), rgb(255 255 255 / 0.14));
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            border: 2px solid rgb(255 255 255 / 0.7); border-left: 0; }
+
+/* 立体柱（visual-spec.md「立体柱」）：一根等轴的方柱，顶面菱形高 40、左右两个侧面，全用背景渐变画，不用 clip-path ——
+   页内动画「升起」（emerge）要用 clip-path 裁底边，两个不能写在同一个元素上。宽 160（顶面菱形 160×40），高至少 60。
+   颜色写 --prism（只写变量：var(--cat-1)、var(--accent)），左面压暗、顶面提亮由这里算。
+   .is-glass 玻璃外壳；.is-base 白底座（--surface）；.is-open 不画顶面（底座的前一半，压在数值柱前面）；
+   .is-reflect 底下一道淡淡的倒影。 */
+.s-prism {
+  --prism: var(--accent);
+  --pl: color-mix(in oklab, var(--prism) 78%, black);
+  --pr: var(--prism);
+  --pt: color-mix(in oklab, var(--prism) 72%, white);
+  background:
+    linear-gradient(to top left, var(--pt) calc(50% - .5px), transparent calc(50% + .5px)) 0 0 / 50% 20px no-repeat,
+    linear-gradient(to top right, var(--pt) calc(50% - .5px), transparent calc(50% + .5px)) 100% 0 / 50% 20px no-repeat,
+    linear-gradient(to top right, var(--pl) calc(50% - .5px), var(--pt) calc(50% + .5px)) 0 20px / 50% 20px no-repeat,
+    linear-gradient(to top left, var(--pr) calc(50% - .5px), var(--pt) calc(50% + .5px)) 100% 20px / 50% 20px no-repeat,
+    linear-gradient(90deg, var(--pl) 50%, var(--pr) 50%) 0 40px / 100% calc(100% - 60px) no-repeat,
+    linear-gradient(to top right, transparent calc(50% - .5px), var(--pl) calc(50% + .5px)) 0 100% / 50% 20px no-repeat,
+    linear-gradient(to top left, transparent calc(50% - .5px), var(--pr) calc(50% + .5px)) 100% 100% / 50% 20px no-repeat;
+}
+.s-prism > * { position: absolute; margin: 0; }
+.s-prism.is-glass { --pl: rgb(255 255 255 / 0.14); --pr: rgb(255 255 255 / 0.24); --pt: rgb(255 255 255 / 0.46); }
+.s-prism.is-base { --prism: var(--surface); --pl: color-mix(in oklab, var(--prism) 88%, black); }
+.s-prism.is-open { --pt: transparent; }
+.s-prism.is-reflect { -webkit-box-reflect: below 4px linear-gradient(transparent 62%, rgb(0 0 0 / 0.28)); }
+/* 立体柱上的字（底座侧面的数字）：取柱子的颜色压深一档，白底座上读得动。--prism 写在字自己身上 */
+.t-prism { --prism: var(--accent); color: color-mix(in oklab, var(--prism) 70%, black); }
+/* 渐变的圆环扇形（同款 swirl-rings）：一个铺满组的正圆，--hole 以内挖空，--band-in 到 --band-out 是深色的一圈，其余是浅色（--surface-2）。
+   深色那圈顺着圆周渐变：从 --arc-start 角起顺时针转 90°，颜色从 --arc-a 走到 --arc-b（0 是 --accent-soft，1 是 --accent）。
+   几块扇形接着排，一块的终点是下一块的起点，一路看是越走越热的一条带子。带子上的字用 .t-on-accent。
+   象限用 clip-path: inset(…) 裁。行内只写这几个变量。 */
+.s-arc {
+  --hole: 120px; --band-in: 280px; --band-out: 360px; --arc-start: 0deg; --arc-a: 0; --arc-b: 1;
+  --arc-from: color-mix(in oklab, var(--accent) calc(var(--arc-a) * 100%), var(--accent-soft));
+  --arc-to: color-mix(in oklab, var(--accent) calc(var(--arc-b) * 100%), var(--accent-soft));
+  border-radius: 50%;
+  background:
+    radial-gradient(circle closest-side, var(--surface-2) var(--band-in), transparent calc(var(--band-in) + 1px), transparent var(--band-out), var(--surface-2) calc(var(--band-out) + 1px)),
+    conic-gradient(from var(--arc-start), var(--arc-from), var(--arc-to) 90deg, var(--arc-to));
+  -webkit-mask: radial-gradient(circle closest-side, transparent var(--hole), #000 calc(var(--hole) + 1px));
+  mask: radial-gradient(circle closest-side, transparent var(--hole), #000 calc(var(--hole) + 1px));
+}
+/* 落在地上的软阴影：一个椭圆，中间深、往外淡没 */
+.s-shadow { border-radius: 50%; background: radial-gradient(closest-side, rgb(0 0 0 / 0.36), rgb(0 0 0 / 0)); }
+/* 一组拼起来的形状整体投一道柔和的影子（拼成 S 的扇形）。写在 .s-group 上，影子跟着组转 */
+.s-lift { filter: drop-shadow(0 16px 24px rgb(0 0 0 / 0.16)); }
+/* 循环飘动层：里面那张图由 engine.js 换成平铺背景、按 data-drift 的速度一直挪（雨、雪） */
+.s-drift { pointer-events: none; }
+
+/* 页内动画（transitions.md「页内动画」）。
+   .s-group：把几个形状编成一组一起动（灯头 + 灯身），组里的子元素按组的左上角绝对定位。
+   .s-light：光束照亮的那一层底色 —— 主面色压在页面底上的一层薄光，层里的字照常用页面底上的文字色。
+   用伪元素铺色而不是直接给底色：这样它不算一个新的色面，配色校验不用为它加配对。 */
+.s-group > * { position: absolute; margin: 0; }
+/* 光的浓淡用 --light-strength 调（0–1，默认 0.16 是一层薄光；舞台射灯那种实在的光柱写 0.5 左右） */
+.s-light::before { content: ""; position: absolute; inset: 0; background: var(--surface); opacity: var(--light-strength, 0.16); }
+
+/* 吊灯（transitions.md「吊灯」）：<div class="s-lamp" data-id="lamp" data-lamp="x y len angle on [reach] [pool]">
+   里面放一张透明底的灯图 <img style="width; height" data-mouth>。铺满画布，不写 left/top/width/height。
+   engine.js 把灯图挂在吊线下面绕吊点转，光束、光圈画在灯后面（.lamp-light），灯压在内容上面（.lamp-rig）。
+   **灯光是固定的暖白**，不跟配色：光就是光，和 .s-glass 不跟配色一个道理。只用在深底配色上。
+   .s-lamp 自己不写 z-index：光在内容下面、灯在内容上面，两层要插在 .s-lit 前后。 */
+.s-lamp { left: 0; top: 0; width: var(--canvas-w); height: var(--canvas-h); pointer-events: none; }
+.s-lamp > .lamp-light { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 0; }
+.s-lamp > .lamp-rig { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; z-index: 3; }
+.lamp-rig > .lamp-cord { position: absolute; left: -1.5px; top: 0; width: 3px; background: color-mix(in oklab, var(--text) 30%, var(--bg)); }
+.lamp-rig > .lamp-body { position: absolute; left: 0; top: 0; display: block; background: center / 100% 100% no-repeat; }
+.lamp-beam-0 { stop-color: rgb(255 236 200 / 0.26); }
+.lamp-beam-1 { stop-color: rgb(255 236 200 / 0); }
+.lamp-halo-0 { stop-color: rgb(255 236 200 / 0.28); }
+.lamp-halo-1 { stop-color: rgb(255 236 200 / 0.1); }
+.lamp-halo-2 { stop-color: rgb(255 236 200 / 0); }
+/* 被灯照亮的那一层：铺满画布，里面的东西按画布坐标绝对定位。光圈里看得见，光圈外只剩一点余光，
+   没开灯时整层都只剩余光（遮罩由 engine.js 按灯的姿态每帧写）。说明文字放在这一层外面，一直读得清。 */
+.s-lit { left: 0; top: 0; width: var(--canvas-w); height: var(--canvas-h); z-index: 1; pointer-events: none; }
+.s-lit > * { position: absolute; margin: 0; }
+/* data-anim 的副本（引擎生成，不要手写）。
+   .st-trail：拖影飞入跟在后面的几份，模糊一点像残影。
+   .st-shine：擦亮那道高光 —— 字透明，斜向渐变按字形裁出来，引擎量出字的左右边界，推着 background-position 只在字上扫一遍。
+   高光颜色用 --shine，默认半透明白；浅底深字上也看得见。要换色在元素上写 style="--shine: …"。 */
+.st-trail { pointer-events: none; filter: blur(2px); }
+.st-shine, .st-shine * { color: transparent !important; -webkit-text-fill-color: transparent; }
+.st-shine {
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 15%, var(--shine, #fff) 50%, transparent 85%) no-repeat;
+  background-size: 260px 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  /* 一圈外发光：浅色字上叠白光几乎没有反差，靠光晕看出「亮了一下」 */
+  filter: drop-shadow(0 0 10px var(--shine, #fff));
+}
+
+/* 整页视频：铺满画布。录制时由 capture.mjs 逐帧 seek，不靠真实播放 */
+.v-full    { left: 0; top: 0; width: var(--canvas-w); height: var(--canvas-h); object-fit: cover; }
+
+/* 匹配用的隐形锚：画面里那个形状在视频像素里、DOM 里没有对应元素时，
+   用一个看不见的框把它的位置和大小标出来，给 match-cut 当锚。
+   它不参与圆角校验（本来就没有轮廓），也不会被观众看到。 */
+.s-anchor  { opacity: 0; pointer-events: none; }
+
+/* 折线：写在 <svg> 里的 path / polyline 上。svg 本身绝对定位，viewBox 和宽高一致（单位就是像素） */
+.l-accent, .l-surface, .l-text, .l-dim { fill: none; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.l-accent  { stroke: var(--accent); }
+.l-surface { stroke: var(--surface); }
+.l-text    { stroke: var(--text); }
+.l-dim     { stroke: var(--text-dim); stroke-width: 2; }
+/* 压在面板上、彩色立体柱上的线（小图标）：面板上的字色 / 固定白色，和 .t-on-surface / .t-on-glass 同理 */
+.l-on-surface, .l-on-glass { fill: none; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.l-on-surface { stroke: var(--text-on-surface); }
+.l-on-glass { stroke: #fff; }
+
+/* 遮挡剪辑用的色块，由 engine.js 创建 */
+.st-mask { position: absolute; left: 0; top: 0; width: var(--canvas-w); height: var(--canvas-h); background: var(--accent); z-index: 10; }
+
+/* 故事模式：照片和引导框，由 engine.js 定位 */
+.reveal .st-photo { left: 0; top: 0; max-width: none; max-height: none; margin: 0; }
+.st-guide { left: 0; top: 0; width: var(--canvas-w); height: var(--canvas-h); z-index: 5; pointer-events: none; overflow: visible; }
+.st-guide path { stroke: var(--accent); stroke-width: 10; stroke-linejoin: round; fill: none; }
+.st-scrim { left: 0; top: 0; width: var(--canvas-w); height: var(--canvas-h); background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 40%); pointer-events: none; }
+
+/* 回顾片尾：一块倾斜的屏幕，里面把这份稿子的某一段页按真转场自动放一遍（见 engine.js「回顾片尾」）。
+   写 left/top/width/height 定屏幕位置，宽高比 16:9。透视和倾斜由 engine.js 设，不要自己写 transform。
+   底下的倒影是屏幕本身的反射，跟着屏幕一起倾斜。 */
+.s-recap   { overflow: hidden; border-radius: var(--radius-s);
+             -webkit-box-reflect: below 12px linear-gradient(transparent 62%, rgba(255, 255, 255, 0.22)); }
+.s-recap > iframe { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+.s-recap > .st-ghost { right: auto; bottom: auto; z-index: 1; will-change: transform; } /* iframe 自成合成层，不提层的话 ghost 会被它盖住 */
+
+/* 片尾名单：<ol class="t-credits"><li><span>职责</span><b>姓名</b></li>…</ol>。
+   写 left/top/width/height 定滚动框，名单从框下沿滚进来，和回顾同时放完。上下沿渐隐。
+   颜色跟着文字色走：压在 .s-surface 上时加 .t-on-surface。 */
+.t-credits { list-style: none; padding: 0; overflow: hidden;
+             -webkit-mask-image: linear-gradient(transparent, #000 12%, #000 88%, transparent);
+             mask-image: linear-gradient(transparent, #000 12%, #000 88%, transparent); }
+.t-credits li { display: flex; align-items: baseline; gap: 40px; height: 80px; }
+.t-credits span { width: 45%; text-align: right; font-size: 24px; letter-spacing: 0.14em; opacity: 0.6; white-space: nowrap; }
+.t-credits b { font-size: var(--type-body); font-weight: 600; white-space: nowrap; }
